@@ -18,9 +18,9 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		"\nlocalhost:8080/create : will create new robot with (0,0) location and return created robot ID"+
 		"\nlocalhost:8080/delete/1 : will delete robot with id=1 (if present)"+
 		"\nlocalhost:8080/state/1 : will return json object with current state of robot with id=1 (if present)"+
-		"\nlocalhost:8080/move/1/N N E : will move robot with id=1 two steps in north direction and one step in E direction. Robot will be in (1, 2) position and return jobID"
-		"\nlocalhost:8080/status/10 : will return job status of the job with jobID=10"
-		"\nlocalhost:8080/cancel/10 : will cancel job with jobID=10 if not in process")
+		"\nlocalhost:8080/move/1/N N E : will move robot with id=1 two steps in north direction and one step in E direction. Robot will be in (1, 2) position and return jobID"+
+		"\nlocalhost:8080/status/1/10 : will return job status of the Robot ID=1 and jobID=10"+
+		"\nlocalhost:8080/cancel/1/10 : will cancel job from Robot ID=1 and jobID=10 if not in process")
 }
 
 func createRobotHandler(w http.ResponseWriter, r *http.Request) {
