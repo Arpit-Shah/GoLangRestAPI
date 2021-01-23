@@ -25,21 +25,21 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 func createRobotHandler(w http.ResponseWriter, r *http.Request) {
 	var robot = createRobot()
-	Robots = append(Robots, robot)
+	IRobots = append(IRobots, robot)
 	fmt.Fprintf(w, "The robot with ID %v has been created successfully", robot.ID)
 }
 
 func getRobotsHandler(w http.ResponseWriter, r *http.Request) {
 	var mRobots []mRobot
-	for i := 0; i < len(Robots); i++ {
+	for i := 0; i < len(IRobots); i++ {
 
 		// Create JSON model
 		var modelRobotState mRobotState
-		modelRobotState.X = Robots[i].State.X
-		modelRobotState.Y = Robots[i].State.Y
-		modelRobotState.HasCrate = Robots[i].State.HasCrate
+		modelRobotState.X = IRobots[i].RobotState.X
+		modelRobotState.Y = IRobots[i].RobotState.Y
+		modelRobotState.HasCrate = IRobots[i].RobotState.HasCrate
 		var modelRobot mRobot
-		modelRobot.ID = Robots[i].ID
+		modelRobot.ID = IRobots[i].ID
 		modelRobot.RobotState = &modelRobotState
 
 		// Add each model to slice
@@ -57,9 +57,9 @@ func deleteRobotHandler(w http.ResponseWriter, r *http.Request) {
 	// Convert to uInt64
 	robotIDuint, _ := strconv.ParseUint(robotID, 10, 64)
 
-	for i, singleRobot := range Robots {
+	for i, singleRobot := range IRobots {
 		if singleRobot.ID == robotIDuint {
-			Robots = append(Robots[:i], Robots[i+1:]...)
+			IRobots = append(IRobots[:i], IRobots[i+1:]...)
 			fmt.Fprintf(w, "The robot with ID %v has been deleted successfully", robotID)
 		}
 	}
@@ -72,14 +72,14 @@ func getRobotStateHandler(w http.ResponseWriter, r *http.Request) {
 	// Convert to uInt64
 	robotIDuint, _ := strconv.ParseUint(robotID, 10, 64)
 
-	for i := 0; i < len(Robots); i++ {
+	for i := 0; i < len(IRobots); i++ {
 
-		if Robots[i].ID == robotIDuint {
+		if IRobots[i].ID == robotIDuint {
 			// Create JSON Model
 			var modelRobotState mRobotState
-			modelRobotState.X = Robots[i].State.X
-			modelRobotState.Y = Robots[i].State.Y
-			modelRobotState.HasCrate = Robots[i].State.HasCrate
+			modelRobotState.X = IRobots[i].RobotState.X
+			modelRobotState.Y = IRobots[i].RobotState.Y
+			modelRobotState.HasCrate = IRobots[i].RobotState.HasCrate
 
 			// Return created Robot
 			w.Header().Set("Content-Type", "application/json")
@@ -114,10 +114,57 @@ func moveRobotHandler(w http.ResponseWriter, r *http.Request) {
 	// Convert to uInt64
 	robotIDuint, _ := strconv.ParseUint(robotID, 10, 64)
 
-	for j := 0; j < len(Robots); j++ {
+	for j := 0; j < len(IRobots); j++ {
 
-		fmt.Println(Robots[j].ID)
-		if Robots[j].ID == robotIDuint {
+		fmt.Println(IRobots[j].ID)
+		if IRobots[j].ID == robotIDuint {
+
+			taskID, position, err := IRobots[j].EnqueueTask(command)
+			if position != nil {
+				for ps := range position {
+					fmt.Println(taskID)
+					fmt.Println(ps.X)
+					fmt.Println(ps.Y)
+				}
+			}
+			if err != nil {
+				for er := range err {
+					fmt.Println(taskID)
+					fmt.Println(er)
+				}
+			}
+
+			// Return Status Event
+			//w.Header().Set("Content-Type", "application/json")
+			//json.NewEncoder(w).Encode(StatusEvents)
+			fmt.Fprintf(w, "Successful %v", robotID)
+
+		}
+	}
+
+}
+
+/*
+// Move Robot
+func moveRobotHandler(w http.ResponseWriter, r *http.Request) {
+
+	robotID := mux.Vars(r)["id"]
+	command := mux.Vars(r)["command"]
+	// fmt.Println(robotID)
+	// fmt.Println(command)
+
+	if !validateCommand(command) {
+		http.Error(w, "BAD Request", http.StatusBadRequest)
+		return
+	}
+
+	// Convert to uInt64
+	robotIDuint, _ := strconv.ParseUint(robotID, 10, 64)
+
+	for j := 0; j < len(IRobots); j++ {
+
+		fmt.Println(IRobots[j].ID)
+		if IRobots[j].ID == robotIDuint {
 			// var StatusEvents = processJob(&singleRobot.State, command)
 
 			// create a slice for the errors
@@ -128,35 +175,35 @@ func moveRobotHandler(w http.ResponseWriter, r *http.Request) {
 
 			for i := 0; i < len(actions); i++ {
 				if actions[i] == "N" {
-					if Robots[j].State.Y != 9 {
-						Robots[j].State.Y++
+					if IRobots[j].RobotState.Y != 9 {
+						IRobots[j].RobotState.Y++
 						fmt.Println("Travelling North")
 						StatusEvents = append(StatusEvents, mStatusEvent{Error: false, Message: "Move North successful"})
 					} else {
 						StatusEvents = append(StatusEvents, mStatusEvent{Error: true, Message: "Can not move to North"})
 					}
 				} else if actions[i] == "S" {
-					if Robots[j].State.Y != 0 {
-						Robots[j].State.Y--
+					if IRobots[j].RobotState.Y != 0 {
+						IRobots[j].RobotState.Y--
 						fmt.Println("Travelling South")
 						StatusEvents = append(StatusEvents, mStatusEvent{Error: false, Message: "Move South successful"})
 					} else {
 						StatusEvents = append(StatusEvents, mStatusEvent{Error: true, Message: "Can not move to South"})
 					}
 				} else if actions[i] == "E" {
-					if Robots[j].State.X != 9 {
+					if IRobots[j].RobotState.X != 9 {
 						fmt.Println("I am here")
-						fmt.Print(Robots[i].State.X)
-						Robots[j].State.X++
-						fmt.Print(Robots[i].State.X)
+						fmt.Print(IRobots[i].RobotState.X)
+						IRobots[j].RobotState.X++
+						fmt.Print(IRobots[i].RobotState.X)
 						fmt.Println("Travelling East")
 						StatusEvents = append(StatusEvents, mStatusEvent{Error: false, Message: "Move East successful"})
 					} else {
 						StatusEvents = append(StatusEvents, mStatusEvent{Error: true, Message: "Can not move to East"})
 					}
 				} else if actions[i] == "W" {
-					if Robots[j].State.X != 0 {
-						Robots[j].State.X--
+					if IRobots[j].RobotState.X != 0 {
+						IRobots[j].RobotState.X--
 						fmt.Println("Travelling West")
 						StatusEvents = append(StatusEvents, mStatusEvent{Error: false, Message: "Move West successful"})
 					} else {
@@ -173,7 +220,7 @@ func moveRobotHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-}
+}*/
 
 func processJob(singleRobotState *RobotState, command string) []mStatusEvent {
 

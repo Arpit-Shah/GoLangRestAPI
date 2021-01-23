@@ -10,7 +10,7 @@ import (
 func main() {
 
 	// Create 1 Robot by Default
-	Robots = append(Robots, createRobot())
+	IRobots = append(IRobots, createRobot())
 
 	// Initialise router
 	r := mux.NewRouter().StrictSlash(true)
@@ -24,6 +24,9 @@ func main() {
 	r.HandleFunc("/move/{id}/{command}", moveRobotHandler).Methods("POST")
 	r.HandleFunc("/status/{id}/{jobid}", jobStatusHandler).Methods("GET")
 	r.HandleFunc("/cancel/{id}/{jobid}", jobCancelHandler).Methods("GET")
+
+	// for test purpose only
+	r.HandleFunc("/test/{method}/{testcase}", MockSetupHandler).Methods("POST")
 
 	// Start Server
 	log.Fatal(http.ListenAndServe(":8080", r))
