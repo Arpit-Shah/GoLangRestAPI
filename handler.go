@@ -120,23 +120,28 @@ func moveRobotHandler(w http.ResponseWriter, r *http.Request) {
 		if IRobots[j].ID == robotIDuint {
 
 			taskID, position, err := IRobots[j].EnqueueTask(command)
-			if position != nil {
-				for ps := range position {
-					fmt.Println(taskID)
-					fmt.Println(ps.X)
-					fmt.Println(ps.Y)
-				}
-			}
-			if err != nil {
-				for er := range err {
-					fmt.Println(taskID)
-					fmt.Println(er)
-				}
-			}
 
+			done := false
+			for !done {
+				select {
+				case msg1 := <-position:
+					fmt.Println(taskID)
+					fmt.Println("Current X", msg1.X)
+					fmt.Println("Current Y", msg1.Y)
+				case msg2 := <-err:
+					fmt.Println("Inside error")
+					if msg2.Error() == "OK" {
+						// Response OK
+					} else {
+						fmt.Println(taskID)
+						fmt.Println("Error:", msg2)
+					}
+					done = true
+					break
+				}
+			}
+			fmt.Println("Outside error")
 			// Return Status Event
-			//w.Header().Set("Content-Type", "application/json")
-			//json.NewEncoder(w).Encode(StatusEvents)
 			fmt.Fprintf(w, "Successful %v", robotID)
 
 		}

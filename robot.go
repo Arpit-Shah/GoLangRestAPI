@@ -41,48 +41,61 @@ type RobotState struct {
 func (ir *IRobot) EnqueueTask(commands string) (taskID string, position chan RobotState, err chan error) {
 
 	fmt.Println("Processing Robot ID: ", ir.ID)
+	err = make(chan error)
+	position = make(chan RobotState)
 
-	// Split strings using white space
-	actions := strings.Fields(commands)
+	go func() {
+		// Split strings using white space
+		actions := strings.Fields(commands)
+		isFail := false
 
-	for i := 0; i < len(actions); i++ {
-		if actions[i] == "N" {
-			if ir.RobotState.Y != 9 {
-				ir.RobotState.Y++
-				fmt.Println("Travelling North ", ir.RobotState.Y)
-				//StatusEvents = append(StatusEvents, mStatusEvent{Error: false, Message: "Move North successful"})
-			} else {
-				err <- errors.New("Can not move to North")
+		for i := 0; i < len(actions); i++ {
+			if actions[i] == "N" {
+				if ir.RobotState.Y != 9 {
+					ir.RobotState.Y++
+					fmt.Println("Travelling North ", ir.RobotState.Y)
+				} else {
+					err <- errors.New("Can not move to North")
+					isFail = true
+					break
+				}
+			} else if actions[i] == "S" {
+				if ir.RobotState.Y != 0 {
+					ir.RobotState.Y--
+					fmt.Println("Travelling South")
+				} else {
+					err <- errors.New("Can not move to South")
+					isFail = true
+					break
+				}
+			} else if actions[i] == "E" {
+				if ir.RobotState.X != 9 {
+					ir.RobotState.X++
+					fmt.Println("Travelling East", ir.RobotState.Y)
+				} else {
+					err <- errors.New("Can not move to East")
+					isFail = true
+					break
+				}
+			} else if actions[i] == "W" {
+				if ir.RobotState.X != 0 {
+					ir.RobotState.X--
+					fmt.Println("Travelling West")
+				} else {
+					err <- errors.New("Can not move to West")
+					isFail = true
+					break
+				}
 			}
-		} else if actions[i] == "S" {
-			if ir.RobotState.Y != 0 {
-				ir.RobotState.Y--
-				fmt.Println("Travelling South")
-				//StatusEvents = append(StatusEvents, mStatusEvent{Error: false, Message: "Move South successful"})
-			} else {
-				err <- errors.New("Can not move to South")
-			}
-		} else if actions[i] == "E" {
-			if ir.RobotState.X != 9 {
-				ir.RobotState.X++
-				fmt.Println("Travelling East")
-				//StatusEvents = append(StatusEvents, mStatusEvent{Error: false, Message: "Move East successful"})
-			} else {
-				err <- errors.New("Can not move to East")
-			}
-		} else if actions[i] == "W" {
-			if ir.RobotState.X != 0 {
-				ir.RobotState.X--
-				fmt.Println("Travelling West")
-				//StatusEvents = append(StatusEvents, mStatusEvent{Error: false, Message: "Move West successful"})
-			} else {
-				err <- errors.New("Can not move to West")
-			}
+			fmt.Println("Sending position")
+			position <- ir.RobotState
+
 		}
-		fmt.Println("Sending position")
-		//position <- ir.RobotState
 
-	}
+		if !isFail {
+			err <- errors.New("OK")
+		}
+	}()
 	incrementRobotTaskCounter()
 	return fmt.Sprint(RobotTaskCounter), position, err
 
