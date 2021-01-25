@@ -131,18 +131,18 @@ func moveRobotHandler(w http.ResponseWriter, r *http.Request) {
 				case msg2 := <-err:
 					fmt.Println("Inside error")
 					if msg2.Error() == "OK" {
-						// Response OK
+						fmt.Fprintf(w, "Successful RobotID: %v, Command: %v, Current X:%v, Current Y:%v", robotID, command, IRobots[j].RobotState.X, IRobots[j].RobotState.Y)
 					} else {
 						fmt.Println(taskID)
 						fmt.Println("Error:", msg2)
+						w.WriteHeader(http.StatusBadRequest)
+						fmt.Fprintf(w, "FAIL RobotID: %v, Command: %v, Current X:%v, Current Y:%v, Error:%v", robotID, command, IRobots[j].RobotState.X, IRobots[j].RobotState.Y, msg2)
+
 					}
 					done = true
 					break
 				}
 			}
-			fmt.Println("Outside error")
-			// Return Status Event
-			fmt.Fprintf(w, "Successful %v", robotID)
 
 		}
 	}
